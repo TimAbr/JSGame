@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: maze
+      POSTGRES_PASSWORD: maze
+      POSTGRES_DB: maze
+    ports:
+      - "5432:5432"
+    volumes:
+      - maze-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maze -d maze"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://maze:maze@postgres:5432/maze
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  maze-pg:

@@ -1,0 +1,178 @@
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --panel: #0e1c33;
+  --panel-2: #132844;
+  --ink: #e8f1ff;
+  --muted: #8eabc9;
+  --line: #1e3d66;
+  --accent: #3b82f6;
+  --accent-2: #60a5fa;
+  --danger: #f0a3a8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Roboto, sans-serif;
+  background:
+    radial-gradient(900px 420px at 50% -10%, #16325c 0%, transparent 60%),
+    var(--bg);
+  color: var(--ink);
+}
+
+button, input { font: inherit; color: inherit; }
+
+#app {
+  width: min(880px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.panel, .stage {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.brand {
+  margin: 0 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.lead { margin: 0 0 20px; color: var(--muted); }
+
+label { display: block; margin: 14px 0; color: var(--muted); font-size: 14px; }
+
+input[type="text"], input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #091525;
+}
+
+input:focus { outline: 2px solid #2458a8; border-color: transparent; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+button:hover { background: #2f6fe0; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+button.ghost:hover { background: var(--panel-2); }
+
+.hint { color: var(--muted); }
+.center { text-align: center; padding: 40px 0; }
+
+.banner, .toast {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #2a1a28;
+  color: var(--danger);
+}
+
+.code-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.code {
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+}
+
+.players, .board { list-style: none; padding: 0; margin: 16px 0 0; }
+.players li, .board li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.players em, .board em { margin-left: auto; color: var(--muted); font-style: normal; font-size: 14px; }
+.swatch, .board i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.board b { font-weight: 500; }
+.board strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+.hud { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.timer { margin: 4px 0; font-size: 40px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.status { margin: 0 0 10px; color: var(--muted); }
+
+canvas[data-maze] {
+  width: min(100%, 680px);
+  aspect-ratio: 1;
+  display: block;
+  margin: 18px auto;
+  border-radius: 8px;
+  background: #07111f;
+}
+
+.countdown {
+  font-size: 96px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1;
+  padding: 36px 0;
+}
+
+.check { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.check input { width: auto; margin: 0; accent-color: var(--accent); }
+
+.search-row { display: flex; gap: 8px; align-items: flex-end; }
+.search-row label { flex: 1; margin: 0; }
+.search-row button { margin-bottom: 0; white-space: nowrap; }
+
+.room-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.room-list button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+
+.room-list button:hover { background: var(--panel-2); }
+.room-list strong { letter-spacing: 0.12em; font-weight: 500; }
+.room-list span { color: var(--muted); }
