@@ -27,6 +27,8 @@ export function createMatchModel() {
     getRoom: () => room,
     getMe: () => api.me(),
     personalMs: () => api.personalMs(),
+    oneWay: () => clock.oneWay(),
+    latestOf: (id) => remotes.latest(id),
   });
   return {
     ...api,
@@ -34,7 +36,10 @@ export function createMatchModel() {
     applyState(payload, resetClock = false) {
       room = payload.room;
       youId = payload.youId;
-      if (room?.serverNow) clock.note(room.serverNow, resetClock);
+      if (payload.echoClientNow != null && payload.echoServerRecvAt != null && room?.serverNow) {
+        clock.noteEcho(room.serverNow, payload.echoClientNow, payload.echoServerRecvAt, resetClock);
+      }
+      else if (room?.serverNow) clock.note(room.serverNow, resetClock);
       remotes.apply(room, youId);
     },
     dropRemotes() {

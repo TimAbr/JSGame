@@ -12,6 +12,7 @@ export function createScreens({ app, transport, model, state }) {
       screen: model.room() ? "room" : state.screen,
       query: state.catalog.query,
       listed: state.listed,
+      autopilot: state.autopilot,
     });
   }
 
@@ -52,12 +53,13 @@ export function createScreens({ app, transport, model, state }) {
       room?.code ?? "",
       youId ?? "",
       room?.adminId ?? "",
-      room?.players?.map((player) => `${player.id}:${player.connected}:${player.bot}:${player.finishTimeMs}:${player.bonusMs}`).join("|") ?? "",
+      room?.players?.map((player) => `${player.id}:${player.connected}:${player.finishTimeMs}:${player.bonusMs}`).join("|") ?? "",
       room?.coins?.map((coin) => coin.id).join(",") ?? "",
       state.catalog.query,
       state.catalog.items.map((item) => item.code).join(","),
       state.catalog.loading,
       state.offline,
+      state.autopilot,
       state.toast,
     ].join("~");
     if (!force && key === state.shellKey && phase === "race") {
@@ -77,8 +79,8 @@ export function createScreens({ app, transport, model, state }) {
       else app.innerHTML = homeHtml(state.offline) + toastHtml();
       return;
     }
-    if (phase === "lobby") app.innerHTML = lobbyHtml({ room, youId, offline: state.offline }) + toastHtml();
-    else app.innerHTML = matchHtml({ room, youId, offline: state.offline, personal: model.personalMs() }) + toastHtml();
+    if (phase === "lobby") app.innerHTML = lobbyHtml({ room, youId, offline: state.offline, autopilot: state.autopilot }) + toastHtml();
+    else app.innerHTML = matchHtml({ room, youId, offline: state.offline, autopilot: state.autopilot, personal: model.personalMs() }) + toastHtml();
     paintLive();
   }
 
@@ -161,6 +163,7 @@ export function createScreens({ app, transport, model, state }) {
       }
       if (action === "leave") {
         transport.send("leave", {});
+        state.autopilot = false;
         model.clear();
         clearSession();
         state.screen = "home";
@@ -173,7 +176,8 @@ export function createScreens({ app, transport, model, state }) {
     appNode.addEventListener("change", (event) => {
       const field = event.target;
       if (!(field instanceof HTMLInputElement) || !field.matches("[data-bot]")) return;
-      transport.send("bot", { enabled: field.checked });
+      state.autopilot = field.checked;
+      remember();
     });
 
     appNode.addEventListener("scroll", (event) => {

@@ -19,6 +19,7 @@ const state = {
   screen: place.screen,
   listed: place.listed,
   kicked: false,
+  autopilot: place.autopilot,
   shellKey: "",
   catalog: { query: place.query, items: [], nextOffset: 0, loading: false },
 };

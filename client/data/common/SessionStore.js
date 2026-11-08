@@ -24,9 +24,9 @@ export function loadPlace() {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(PLACE_KEY) || "null");
     const screen = ["home", "create", "browse", "room"].includes(parsed?.screen) ? parsed.screen : "home";
-    return { screen, query: String(parsed?.query ?? ""), listed: parsed?.listed !== false };
+    return { screen, query: String(parsed?.query ?? ""), listed: parsed?.listed !== false, autopilot: parsed?.autopilot === true };
   } catch {
-    return { screen: "home", query: "", listed: true };
+    return { screen: "home", query: "", listed: true, autopilot: false };
   }
 }
 

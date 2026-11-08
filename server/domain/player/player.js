@@ -11,9 +11,6 @@ export function createPlayer(id, name, index, entrance) {
     finishTimeMs: null,
     finishSeq: null,
     connected: true,
-    bot: false,
-    botDir: null,
-    botNextAt: 0,
     ack: 0,
   };
 }
@@ -28,8 +25,6 @@ export function resetRun(player, entrance) {
   player.bonusMs = 0;
   player.finishTimeMs = null;
   player.finishSeq = null;
-  player.botDir = null;
-  player.botNextAt = 0;
 }
 
 export function toPublicPlayer(player, reveal) {
@@ -43,7 +38,6 @@ export function toPublicPlayer(player, reveal) {
     finishTimeMs: player.finishTimeMs,
     finishSeq: player.finishSeq,
     connected: player.connected,
-    bot: Boolean(player.bot),
     ack: player.ack ?? 0,
   };
 }

@@ -43,6 +43,11 @@ export function createRemoteMotion() {
         player.y = track.y;
       }
     },
+    latest(id) {
+      const track = remote.get(id);
+      if (!track) return null;
+      return track.queue.at(-1) ?? track;
+    },
     drop() {
       remote.clear();
     },

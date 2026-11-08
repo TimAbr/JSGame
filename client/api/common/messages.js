@@ -29,6 +29,7 @@ export function createMessages({ transport, model, state, screens }) {
       const seenFinish = model.me()?.finishTimeMs ?? null;
       model.applyState(message.payload, state.freshClock);
       state.freshClock = false;
+      state.moveSeq = Math.max(state.moveSeq, serverMe?.ack ?? 0);
       const room = model.room();
       const me = model.me();
       if (me && serverMe) model.catchUp(serverMe, state.pending, seenFinish);

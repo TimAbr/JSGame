@@ -1,6 +1,6 @@
 import { formatTime } from "../../domain/common/time.js";
 
-export function matchHtml({ room, youId, offline, personal }) {
+export function matchHtml({ room, youId, offline, autopilot, personal }) {
   const me = room.players.find((player) => player.id === youId);
   const admin = room.adminId === youId;
   const rows = room.players.map((player, index) => {
@@ -26,7 +26,7 @@ export function matchHtml({ room, youId, offline, personal }) {
           <p class="brand">${room.code}</p>
           <p class="timer" data-timer>${formatTime(personal)}</p>
           <p class="status">${status}</p>
-          <label class="check"><input type="checkbox" data-bot ${me?.bot ? "checked" : ""}> Бот</label>
+          <label class="check"><input type="checkbox" data-bot ${autopilot ? "checked" : ""}> Бот</label>
         </div>
         <div class="actions">${actions.join("")}</div>
       </header>

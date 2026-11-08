@@ -1,7 +1,9 @@
 import { pathLength } from "./path.js";
 
 export const STEP_MS = 160;
+const OPPONENT_STEP_MS = 90;
 const DANGER_STEPS = 8;
+const BONUS_MS = { gold: 2000, silver: 1000 };
 const DIRS = {
   up: [0, -1],
   down: [0, 1],
@@ -9,7 +11,12 @@ const DIRS = {
   right: [1, 0],
 };
 
-export function createPrediction({ getRoom, getMe, personalMs }) {
+export function createPrediction({ getRoom, getMe, personalMs, oneWay, latestOf }) {
+  function blindSteps() {
+    if (oneWay() <= 0) return DANGER_STEPS;
+    return Math.ceil((oneWay() * 2) / OPPONENT_STEP_MS) + 1;
+  }
+
   return {
     coinAhead(dir) {
       const room = getRoom();
@@ -22,26 +29,18 @@ export function createPrediction({ getRoom, getMe, personalMs }) {
     coinContested(coin) {
       const room = getRoom();
       const me = getMe();
-      if (!coin || !room?.maze || !me) return false;
-      return room.players.some((player) => player.id !== me.id && player.x != null && pathLength(room.maze, player, coin) <= DANGER_STEPS);
+      if (!coin || !room?.maze || !me) return true;
+      const hidden = blindSteps();
+      return room.players.some((player) => {
+        if (player.id === me.id || player.x == null) return false;
+        const at = latestOf(player.id) ?? player;
+        return pathLength(room.maze, at, coin) <= hidden;
+      });
     },
     unackedLimit() {
-      const room = getRoom();
-      const me = getMe();
-      if (!me || !room?.maze) return 1;
-      let nearest = Infinity;
-      let contested = false;
-      for (const coin of room.coins ?? []) {
-        const distance = pathLength(room.maze, me, coin);
-        if (distance < nearest) nearest = distance;
-        if (distance <= DANGER_STEPS && this.coinContested(coin)) contested = true;
-      }
-      if (!contested) return 8;
-      if (nearest <= 2) return 1;
-      if (nearest <= DANGER_STEPS) return 3;
       return 8;
     },
-    step(dir, grantBonus = true) {
+    step(dir, grantBonus = false) {
       const room = getRoom();
       const me = getMe();
       const delta = DIRS[dir];
@@ -52,15 +51,13 @@ export function createPrediction({ getRoom, getMe, personalMs }) {
       me.x = x;
       me.y = y;
       const coin = room.coins?.find((item) => item.x === x && item.y === y) ?? null;
-      const bonusAdd = coin && grantBonus ? (coin.kind === "gold" ? 2000 : 1000) : 0;
-      if (coin) {
-        if (bonusAdd) me.bonusMs = (me.bonusMs || 0) + bonusAdd;
-        room.coins = room.coins.filter((item) => item.id !== coin.id);
-      }
+      const bonusAdd = coin && grantBonus ? BONUS_MS[coin.kind] ?? 0 : 0;
+      if (bonusAdd) me.bonusMs = (me.bonusMs || 0) + bonusAdd;
+      if (coin) room.coins = room.coins.filter((item) => item.id !== coin.id);
       const exit = room.maze.exit;
       let finishTimeMs = null;
       if (exit && x === exit.x && y === exit.y && me.finishTimeMs == null) {
-        finishTimeMs = personalMs();
+        finishTimeMs = personalMs() + oneWay();
         me.finishTimeMs = finishTimeMs;
       }
       return { x, y, bonusAdd, coinId: coin?.id ?? null, finishTimeMs };
@@ -88,7 +85,10 @@ export function createPrediction({ getRoom, getMe, personalMs }) {
         if (step.coinId) room.coins = room.coins.filter((coin) => coin.id !== step.coinId);
       }
       if (serverMe.finishTimeMs != null) {
-        me.finishTimeMs = seenFinish == null ? serverMe.finishTimeMs : Math.max(seenFinish, serverMe.finishTimeMs);
+        const lag = oneWay() * 2;
+        const server = serverMe.finishTimeMs;
+        const lagOnly = seenFinish != null && server > seenFinish && server <= seenFinish + lag;
+        me.finishTimeMs = lagOnly ? seenFinish : server;
       } else {
         const predicted = pending.findLast((step) => step.finishTimeMs != null);
         if (predicted) me.finishTimeMs = predicted.finishTimeMs;

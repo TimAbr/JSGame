@@ -1,16 +1,14 @@
-export function lobbyHtml({ room, youId, offline }) {
+export function lobbyHtml({ room, youId, offline, autopilot }) {
   const admin = room.adminId === youId;
   const players = room.players.map((player) => {
     const tags = [
       player.id === room.adminId ? "админ" : "",
       player.id === youId ? "вы" : "",
       player.connected ? "" : "нет связи",
-      player.bot ? "бот" : "",
     ].filter(Boolean).join(" · ");
     return `<li><span class="swatch" style="background:${player.color}"></span><span>${escapeHtml(player.name)}</span><em>${tags}</em></li>`;
   }).join("");
-  const me = room.players.find((player) => player.id === youId);
-  const bot = `<label class="check"><input type="checkbox" data-bot ${me?.bot ? "checked" : ""}> Бот</label>`;
+  const bot = `<label class="check"><input type="checkbox" data-bot ${autopilot ? "checked" : ""}> Бот</label>`;
   const wait = room.players.length < 2 ? "<p class=\"hint\">Ждём второго игрока</p>" : "";
   const start = admin && room.phase === "lobby"
     ? `<button type="button" data-action="start" ${room.players.length < 2 ? "disabled" : ""}>Старт</button>`

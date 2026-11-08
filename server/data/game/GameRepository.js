@@ -11,8 +11,9 @@ export async function createGameRepository(store, clock) {
     commit(next) {
       state = next;
       const snapshot = next;
-      chain = chain.then(() => store.save(snapshot));
-      return chain;
+      const run = chain.then(() => store.save(snapshot));
+      chain = run.catch(() => {});
+      return run;
     },
   };
 }
