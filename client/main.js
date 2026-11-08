@@ -15,6 +15,7 @@ const model = createMatchModel();
 let offline = !transport.isOnline();
 let toast = "";
 let awaiting = false;
+const pending = [];
 const heldAt = new Map();
 const HOLD_DELAY_MS = 220;
 const HOLD_STEP_MS = 160;
@@ -52,8 +53,17 @@ transport.onStatus((online) => {
 transport.onMessage((message) => {
   if (message.type === "state") {
     toast = "";
+    const serverMe = message.payload.room.players.find((player) => player.id === message.payload.youId);
     model.applyState(message.payload);
     const room = model.room();
+    const me = model.me();
+    if (me && serverMe && pending.length) {
+      if (pending[0].x === serverMe.x && pending[0].y === serverMe.y) pending.shift();
+      if (pending.length) {
+        me.x = pending.at(-1).x;
+        me.y = pending.at(-1).y;
+      }
+    }
     const session = loadSession();
     saveSession({
       playerId: message.payload.youId,
@@ -93,6 +103,7 @@ transport.onMessage((message) => {
   if (message.type === "error") {
     toast = message.payload.message;
     awaiting = false;
+    pending.length = 0;
     if (!model.room() && (message.payload.code === "roomNotFound" || message.payload.code === "playerNotFound")) {
       clearSession();
       screen = "browse";
@@ -112,6 +123,7 @@ transport.onMessage((message) => {
       toast = message.payload.message;
     }
     model.clear();
+    pending.length = 0;
     if (message.type === "left") clearSession();
     awaiting = false;
     screen = "home";
@@ -204,14 +216,17 @@ function paintLive() {
 function sendStep(dir) {
   const room = model.room();
   const me = model.me();
-  if (awaiting || offline || !room || room.phase !== "race") return;
+  if (offline || !room || room.phase !== "race") return;
   if (!me || me.finishTimeMs != null || me.bot) return;
   const started = heldAt.get(dir);
   if (started && performance.now() - started >= HOLD_DELAY_MS && performance.now() < (sendStep.nextAt || 0)) return;
   const coin = model.coinAhead(dir);
-  awaiting = true;
+  const moved = model.step(dir);
+  if (!moved) return;
+  pending.push({ x: moved.x, y: moved.y });
   if (started && performance.now() - started >= HOLD_DELAY_MS) sendStep.nextAt = performance.now() + HOLD_STEP_MS;
   transport.send("move", { dir, coinVersion: coin ? coin.version : null });
+  paintLive();
 }
 
 app.addEventListener("submit", (event) => {

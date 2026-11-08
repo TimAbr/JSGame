@@ -42,5 +42,18 @@ export function createMatchModel() {
       const y = me.y + delta[1];
       return room.coins.find((coin) => coin.x === x && coin.y === y) ?? null;
     },
+    step(dir) {
+      const me = this.me();
+      const delta = DIRS[dir];
+      if (!me || !delta || !room?.maze || me.x == null) return null;
+      const x = me.x + delta[0];
+      const y = me.y + delta[1];
+      if (room.maze.cells[y]?.[x] !== 1) return null;
+      me.x = x;
+      me.y = y;
+      const coin = room.coins?.find((item) => item.x === x && item.y === y) ?? null;
+      if (coin) room.coins = room.coins.filter((item) => item !== coin);
+      return { x, y, coin };
+    },
   };
 }
