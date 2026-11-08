@@ -14,6 +14,7 @@ export function createPlayer(id, name, index, entrance) {
     bot: false,
     botDir: null,
     botNextAt: 0,
+    ack: 0,
   };
 }
 
@@ -43,6 +44,7 @@ export function toPublicPlayer(player, reveal) {
     finishSeq: player.finishSeq,
     connected: player.connected,
     bot: Boolean(player.bot),
+    ack: player.ack ?? 0,
   };
 }
 

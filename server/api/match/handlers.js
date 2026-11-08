@@ -12,6 +12,7 @@ export function createMatchApi({ repository, clock }) {
         code: meta.code,
         dir: payload.dir,
         coinVersion: payload.coinVersion ?? null,
+        seq: payload.seq,
         now: now(),
       });
     },

@@ -1,6 +1,6 @@
 import { createWsTransport } from "./data/common/WsTransport.js";
 import { clearSession, loadPlace, loadSession, savePlace, saveSession } from "./data/common/SessionStore.js";
-import { createMatchModel } from "./domain/match/model.js";
+import { STEP_MS, createMatchModel } from "./domain/match/model.js";
 import { countdownLeft, formatTime } from "./domain/common/time.js";
 import { homeHtml } from "./api/lobby/homeView.js";
 import { createHtml } from "./api/lobby/createView.js";
@@ -16,9 +16,11 @@ let offline = !transport.isOnline();
 let toast = "";
 let awaiting = false;
 const pending = [];
+let moveSeq = 0;
+let freshClock = false;
 const heldAt = new Map();
 const HOLD_DELAY_MS = 220;
-const HOLD_STEP_MS = 160;
+const HOLD_STEP_MS = STEP_MS;
 let shellKey = "";
 const place = loadPlace();
 let screen = place.screen;
@@ -45,6 +47,10 @@ const keyDir = {
 
 transport.onStatus((online) => {
   offline = !online;
+  if (!online) {
+    pending.length = 0;
+    model.dropRemotes();
+  }
   if (online && screen === "room") resume(true);
   if (online && screen === "browse") requestList(true);
   render(true);
@@ -54,16 +60,12 @@ transport.onMessage((message) => {
   if (message.type === "state") {
     toast = "";
     const serverMe = message.payload.room.players.find((player) => player.id === message.payload.youId);
-    model.applyState(message.payload);
+    const seenFinish = model.me()?.finishTimeMs ?? null;
+    model.applyState(message.payload, freshClock);
+    freshClock = false;
     const room = model.room();
     const me = model.me();
-    if (me && serverMe && pending.length) {
-      if (pending[0].x === serverMe.x && pending[0].y === serverMe.y) pending.shift();
-      if (pending.length) {
-        me.x = pending.at(-1).x;
-        me.y = pending.at(-1).y;
-      }
-    }
+    if (me && serverMe) model.catchUp(serverMe, pending, seenFinish);
     const session = loadSession();
     saveSession({
       playerId: message.payload.youId,
@@ -135,6 +137,9 @@ function resume(force) {
   const session = loadSession();
   if (kicked || !session || !transport.isOnline()) return;
   if (!force && model.room()?.code === session.code && model.youId() === session.playerId) return;
+  pending.length = 0;
+  model.dropRemotes();
+  freshClock = true;
   transport.send("resume", session);
 }
 
@@ -218,14 +223,18 @@ function sendStep(dir) {
   const me = model.me();
   if (offline || !room || room.phase !== "race") return;
   if (!me || me.finishTimeMs != null || me.bot) return;
+  const waitingContest = pending.some((step) => step.coinId && !step.bonusAdd);
+  if (pending.length >= (waitingContest ? 1 : model.unackedLimit())) return;
   const started = heldAt.get(dir);
   if (started && performance.now() - started >= HOLD_DELAY_MS && performance.now() < (sendStep.nextAt || 0)) return;
   const coin = model.coinAhead(dir);
-  const moved = model.step(dir);
+  const grantBonus = !coin || !model.coinContested(coin);
+  const moved = model.step(dir, grantBonus);
   if (!moved) return;
-  pending.push({ x: moved.x, y: moved.y });
+  moveSeq += 1;
+  pending.push({ ...moved, seq: moveSeq });
+  transport.send("move", { dir, seq: moveSeq, coinVersion: coin ? coin.version : null });
   if (started && performance.now() - started >= HOLD_DELAY_MS) sendStep.nextAt = performance.now() + HOLD_STEP_MS;
-  transport.send("move", { dir, coinVersion: coin ? coin.version : null });
   paintLive();
 }
 
@@ -335,7 +344,10 @@ function heldDir() {
 
 function frame() {
   const room = model.room();
-  if (room && (room.phase === "race" || room.phase === "countdown")) paintLive();
+  if (room && (room.phase === "race" || room.phase === "countdown")) {
+    model.advanceRemotes(performance.now());
+    paintLive();
+  }
   const dir = heldDir();
   const since = dir ? heldAt.get(dir) : 0;
   if (dir && performance.now() - since >= HOLD_DELAY_MS) sendStep(dir);

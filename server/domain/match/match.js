@@ -62,7 +62,7 @@ export function advanceCountdowns(state, now) {
   return { state: next, started, changed };
 }
 
-export function movePlayer(state, { playerId, code, dir, coinVersion, now }) {
+export function movePlayer(state, { playerId, code, dir, coinVersion, seq, now }) {
   const next = clone(state);
   const room = findRoom(next, code);
   if (!room) return fail(errors.roomNotFound);
@@ -77,6 +77,7 @@ export function movePlayer(state, { playerId, code, dir, coinVersion, now }) {
   if (!isOpen(room.maze, x, y)) return fail(errors.badMove);
   player.x = x;
   player.y = y;
+  if (Number.isInteger(seq) && seq > (player.ack ?? 0)) player.ack = seq;
   room.updatedAt = now;
   const events = [{ type: "moved", code, playerId, x, y }];
   const coin = room.coins.find((item) => item.x === x && item.y === y);
