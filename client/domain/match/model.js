@@ -133,7 +133,8 @@ export function createMatchModel() {
         if (distance < nearest) nearest = distance;
         if (this.coinContested(coin) && distance <= DANGER_STEPS) contested = true;
       }
-      if (contested || nearest <= 2) return 1;
+      if (!contested) return 8;
+      if (nearest <= 2) return 1;
       if (nearest <= DANGER_STEPS) return 3;
       return 8;
     },
