@@ -5,7 +5,3 @@ export function formatTime(ms) {
   const centi = Math.floor(clamped / 10) % 100;
   return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(centi).padStart(2, "0")}`;
 }
-
-export function countdownLeft(endsAt, offset) {
-  return Math.max(0, endsAt - (Date.now() + offset));
-}

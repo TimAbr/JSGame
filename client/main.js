@@ -15,7 +15,6 @@ const state = {
   awaiting: false,
   pending: [],
   moveSeq: 0,
-  freshClock: false,
   screen: place.screen,
   listed: place.listed,
   kicked: false,

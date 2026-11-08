@@ -33,17 +33,25 @@ export function createMatchModel() {
   return {
     ...api,
     ...prediction,
-    applyState(payload, resetClock = false) {
+    applyState(payload) {
       room = payload.room;
       youId = payload.youId;
       if (payload.echoClientNow != null && payload.echoServerRecvAt != null && room?.serverNow) {
-        clock.noteEcho(room.serverNow, payload.echoClientNow, payload.echoServerRecvAt, resetClock);
-      }
-      else if (room?.serverNow) clock.note(room.serverNow, resetClock);
+        clock.noteEcho(room.serverNow, payload.echoClientNow, payload.echoServerRecvAt);
+      } else if (room?.serverNow) clock.note(room.serverNow);
       remotes.apply(room, youId);
+    },
+    notePong({ clientNow, recvAt, sentAt }) {
+      clock.noteEcho(sentAt, clientNow, recvAt);
+    },
+    resetClock() {
+      clock.reset();
     },
     dropRemotes() {
       remotes.drop();
+    },
+    remotesMoving() {
+      return remotes.moving();
     },
     advanceRemotes(now) {
       remotes.advance(room, now);

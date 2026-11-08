@@ -43,6 +43,10 @@ export function createRemoteMotion() {
         player.y = track.y;
       }
     },
+    moving() {
+      for (const track of remote.values()) if (track.queue.length) return true;
+      return false;
+    },
     latest(id) {
       const track = remote.get(id);
       if (!track) return null;

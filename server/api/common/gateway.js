@@ -87,6 +87,9 @@ export function createGateway({ server, repository, clock }) {
   }
 
   const lobbyCommands = {
+    ping: ({ ws, payload, recvAt }) => {
+      send(ws, "pong", { clientNow: payload.clientNow, recvAt, sentAt: clock.now() });
+    },
     list: ({ ws, payload }) => {
       send(ws, "list", { ...listRooms(repository.load(), payload), query: String(payload.query ?? "") });
     },

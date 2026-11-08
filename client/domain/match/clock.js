@@ -10,20 +10,23 @@ export function createClockSync() {
   }
 
   return {
-    note(serverNow, reset) {
-      if (reset) samples.length = 0;
+    note(serverNow) {
       if (samples.length) return;
       samples.push({ rtt: Infinity, offset: serverNow - Date.now() });
       adopt();
     },
-    noteEcho(serverNow, clientSent, serverRecvAt, reset) {
-      if (reset) samples.length = 0;
+    noteEcho(serverNow, clientSent, serverRecvAt) {
       const received = Date.now();
       const rtt = received - clientSent - (serverNow - serverRecvAt);
       if (!Number.isFinite(rtt) || rtt < 0 || rtt > 10000) return;
       samples.push({ rtt, offset: (serverRecvAt - clientSent + serverNow - received) / 2 });
       if (samples.length > 8) samples.shift();
       adopt();
+    },
+    reset() {
+      samples.length = 0;
+      offset = 0;
+      oneWay = 0;
     },
     offset: () => offset,
     oneWay: () => oneWay,

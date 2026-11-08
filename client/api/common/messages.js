@@ -1,23 +1,42 @@
 import { LINK } from "../../data/common/WsTransport.js";
 import { clearSession, loadSession, saveSession } from "../../data/common/SessionStore.js";
 
+const PING_BURST = 5;
+const PING_BURST_GAP_MS = 120;
+const PING_INTERVAL_MS = 3000;
+
 export function createMessages({ transport, model, state, screens }) {
+  let pingTimer = null;
+
+  function startPing() {
+    clearTimeout(pingTimer);
+    let burst = PING_BURST;
+    const tick = () => {
+      transport.send("ping", { clientNow: Date.now() });
+      burst -= 1;
+      pingTimer = setTimeout(tick, burst > 0 ? PING_BURST_GAP_MS : PING_INTERVAL_MS);
+    };
+    tick();
+  }
+
   function resume(force) {
     const session = loadSession();
     if (state.kicked || !session || !transport.isOnline()) return;
     if (!force && model.room()?.code === session.code && model.youId() === session.playerId) return;
     state.pending.length = 0;
     model.dropRemotes();
-    state.freshClock = true;
     transport.send("resume", session);
   }
 
   function onStatus(status) {
     state.link = status;
     if (status !== LINK.online) {
+      clearTimeout(pingTimer);
       state.pending.length = 0;
       model.dropRemotes();
+      model.resetClock();
     }
+    if (status === LINK.online) startPing();
     if (status === LINK.online && state.screen === "room") resume(true);
     if (status === LINK.online && state.screen === "browse") screens.requestList(true);
     screens.render(true);
@@ -28,8 +47,7 @@ export function createMessages({ transport, model, state, screens }) {
       state.toast = "";
       const serverMe = message.payload.room.players.find((player) => player.id === message.payload.youId);
       const seenFinish = model.me()?.finishTimeMs ?? null;
-      model.applyState(message.payload, state.freshClock);
-      state.freshClock = false;
+      model.applyState(message.payload);
       state.moveSeq = Math.max(state.moveSeq, serverMe?.ack ?? 0);
       const room = model.room();
       const me = model.me();
@@ -43,6 +61,10 @@ export function createMessages({ transport, model, state, screens }) {
       state.screen = "room";
       state.awaiting = false;
       screens.render(false);
+      return;
+    }
+    if (message.type === "pong") {
+      model.notePong(message.payload);
       return;
     }
     if (message.type === "list") {

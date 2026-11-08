@@ -1,6 +1,6 @@
 import { LINK } from "../../data/common/WsTransport.js";
 import { clearSession, loadSession, savePlace } from "../../data/common/SessionStore.js";
-import { countdownLeft, formatTime } from "../../domain/common/time.js";
+import { formatTime } from "../../domain/common/time.js";
 import { homeHtml } from "../lobby/homeView.js";
 import { createHtml } from "../lobby/createView.js";
 import { listHtml, roomRows } from "../lobby/listView.js";
@@ -36,11 +36,6 @@ export function createScreens({ app, transport, model, state }) {
     if (!room) return;
     const timer = app.querySelector("[data-timer]");
     if (timer && room.phase === "race") timer.textContent = formatTime(model.personalMs());
-    if (room.phase === "countdown") {
-      const node = app.querySelector("[data-count]");
-      const left = countdownLeft(room.countdownEndsAt, model.offset());
-      if (node) node.textContent = String(Math.max(1, Math.ceil(left / 1000)));
-    }
     paintMaze(app.querySelector("[data-maze]"), room, model.youId());
     paintCountdown(app.querySelector("[data-count]"), room.countdownEndsAt, model.offset());
   }

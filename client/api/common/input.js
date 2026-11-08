@@ -64,7 +64,8 @@ export function createInput({ transport, model, state, screens }) {
 
   function frame() {
     const room = model.room();
-    if (room && (room.phase === "race" || room.phase === "countdown")) {
+    const playing = room?.phase === "race" || room?.phase === "countdown";
+    if (room && (playing || model.remotesMoving())) {
       model.advanceRemotes(performance.now());
       screens.paintLive();
     }
