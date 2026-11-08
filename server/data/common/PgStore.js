@@ -1,7 +1,11 @@
 import pg from "pg";
 
 export async function createPgStore(connectionString) {
-  const pool = new pg.Pool({ connectionString });
+  const local = /localhost|127\.0\.0\.1/.test(connectionString);
+  const pool = new pg.Pool({
+    connectionString,
+    ssl: local ? false : { rejectUnauthorized: false },
+  });
   await pool.query(`
     CREATE TABLE IF NOT EXISTS rooms (
       code text PRIMARY KEY,
