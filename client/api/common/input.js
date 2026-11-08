@@ -1,3 +1,4 @@
+import { LINK } from "../../data/common/WsTransport.js";
 import { STEP_MS } from "../../domain/match/model.js";
 import { botDelayMs, nextBotDir } from "../../domain/match/bot.js";
 
@@ -25,7 +26,7 @@ export function createInput({ transport, model, state, screens }) {
   function sendStep(dir) {
     const room = model.room();
     const me = model.me();
-    if (state.offline || !room || room.phase !== "race") return false;
+    if (state.link !== LINK.online || !room || room.phase !== "race") return false;
     if (!me || me.finishTimeMs != null) return false;
     if (state.pending.length >= model.unackedLimit()) return false;
     const started = heldAt.get(dir);
@@ -83,7 +84,7 @@ export function createInput({ transport, model, state, screens }) {
       event.preventDefault();
       if (event.repeat || heldAt.has(dir)) return;
       heldAt.set(dir, performance.now());
-      if (state.offline || state.autopilot) return;
+      if (state.link !== LINK.online || state.autopilot) return;
       sendStep(dir);
     });
     window.addEventListener("keyup", (event) => {

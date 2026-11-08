@@ -10,7 +10,7 @@ const transport = createWsTransport();
 const model = createMatchModel();
 const place = loadPlace();
 const state = {
-  offline: !transport.isOnline(),
+  link: transport.status(),
   toast: "",
   awaiting: false,
   pending: [],

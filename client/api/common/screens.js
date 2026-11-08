@@ -1,3 +1,4 @@
+import { LINK } from "../../data/common/WsTransport.js";
 import { clearSession, loadSession, savePlace } from "../../data/common/SessionStore.js";
 import { countdownLeft, formatTime } from "../../domain/common/time.js";
 import { homeHtml } from "../lobby/homeView.js";
@@ -14,6 +15,16 @@ export function createScreens({ app, transport, model, state }) {
       listed: state.listed,
       autopilot: state.autopilot,
     });
+  }
+
+  function isOffline() {
+    return state.link === LINK.offline;
+  }
+
+  function linkNote() {
+    if (state.link === LINK.offline) return `<p class="banner">Нет соединения</p>`;
+    if (state.link === LINK.connecting) return `<p class="hint">Подключение</p>`;
+    return `<p class="hint">Загрузка комнаты</p>`;
   }
 
   function toastHtml() {
@@ -58,7 +69,7 @@ export function createScreens({ app, transport, model, state }) {
       state.catalog.query,
       state.catalog.items.map((item) => item.code).join(","),
       state.catalog.loading,
-      state.offline,
+      state.link,
       state.autopilot,
       state.toast,
     ].join("~");
@@ -71,16 +82,16 @@ export function createScreens({ app, transport, model, state }) {
     if (!room) {
       const saved = loadSession();
       if (saved) {
-        app.innerHTML = `<section class="panel"><p class="brand">Labirint Race</p><h1>${escapeHtml(saved.code)}</h1>${state.offline ? `<p class="banner">Нет соединения</p>` : `<p class="hint">Подключение</p>`}${toastHtml()}</section>`;
+        app.innerHTML = `<section class="panel"><p class="brand">Labirint Race</p><h1>${escapeHtml(saved.code)}</h1>${linkNote()}${toastHtml()}</section>`;
         return;
       }
-      if (state.screen === "create") app.innerHTML = createHtml({ listed: state.listed, offline: state.offline }) + toastHtml();
-      else if (state.screen === "browse") app.innerHTML = listHtml({ ...state.catalog, offline: state.offline }) + toastHtml();
-      else app.innerHTML = homeHtml(state.offline) + toastHtml();
+      if (state.screen === "create") app.innerHTML = createHtml({ listed: state.listed, offline: isOffline() }) + toastHtml();
+      else if (state.screen === "browse") app.innerHTML = listHtml({ ...state.catalog, offline: isOffline() }) + toastHtml();
+      else app.innerHTML = homeHtml(isOffline()) + toastHtml();
       return;
     }
-    if (phase === "lobby") app.innerHTML = lobbyHtml({ room, youId, offline: state.offline, autopilot: state.autopilot }) + toastHtml();
-    else app.innerHTML = matchHtml({ room, youId, offline: state.offline, autopilot: state.autopilot, personal: model.personalMs() }) + toastHtml();
+    if (phase === "lobby") app.innerHTML = lobbyHtml({ room, youId, offline: isOffline(), autopilot: state.autopilot }) + toastHtml();
+    else app.innerHTML = matchHtml({ room, youId, offline: isOffline(), autopilot: state.autopilot, personal: model.personalMs() }) + toastHtml();
     paintLive();
   }
 

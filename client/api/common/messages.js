@@ -1,3 +1,4 @@
+import { LINK } from "../../data/common/WsTransport.js";
 import { clearSession, loadSession, saveSession } from "../../data/common/SessionStore.js";
 
 export function createMessages({ transport, model, state, screens }) {
@@ -11,14 +12,14 @@ export function createMessages({ transport, model, state, screens }) {
     transport.send("resume", session);
   }
 
-  function onStatus(online) {
-    state.offline = !online;
-    if (!online) {
+  function onStatus(status) {
+    state.link = status;
+    if (status !== LINK.online) {
       state.pending.length = 0;
       model.dropRemotes();
     }
-    if (online && state.screen === "room") resume(true);
-    if (online && state.screen === "browse") screens.requestList(true);
+    if (status === LINK.online && state.screen === "room") resume(true);
+    if (status === LINK.online && state.screen === "browse") screens.requestList(true);
     screens.render(true);
   }
 
